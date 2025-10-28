@@ -1,0 +1,13 @@
+on:
+  workflow_run:
+    workflows: "Main Taski workflow"
+    types:
+      - completed
+
+jobs:
+  trig_selfhosted:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: self-hosted, linux, x64
+    steps:
+      - name: Do stuff on self-hosted runner
+        run: echo "External job started!"
