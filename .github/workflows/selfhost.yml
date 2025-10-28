@@ -1,3 +1,7 @@
+# .github/workflows/main.yml
+name: Self-hosted Taski workflow
+
+
 on:
   workflow_run:
     workflows: ["Main Taski workflow"]
@@ -9,5 +13,23 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: [self-hosted]
     steps:
-      - name: Do stuff on self-hosted runner
-        run: echo "External job started!"
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        
+      - name: Show docker-compose.yml content
+        run: cat docker-compose.production.yml
+
+      - name: Run docker-compose
+        run: |
+            docker-compose up -d
+            #cd taski
+            # Выполняет pull образов с Docker Hub
+            sudo docker compose -f docker-compose.production.yml pull
+            # Перезапускает все контейнеры в Docker Compose
+            sudo docker compose -f docker-compose.production.yml down
+            sudo docker compose -f docker-compose.production.yml up -d
+            # Выполняет миграции и сбор статики
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+            sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/ 
+
